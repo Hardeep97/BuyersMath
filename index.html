@@ -1180,7 +1180,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="homePrice" id="homePriceLabel">Home Price ($)</label>
-                        <input type="number" id="homePrice" value="400000" min="50000" step="5000">
+                        <input type="text" inputmode="numeric" id="homePrice" value="400,000">
                     </div>
                     <div class="form-group">
                         <label for="interestRate">Interest Rate (%)</label>
@@ -1197,19 +1197,19 @@
                     </div>
                     <div class="form-group">
                         <label for="propertyTax">Property Tax ($/yr)</label>
-                        <input type="number" id="propertyTax" value="4400" min="0" max="100000" step="100">
+                        <input type="text" inputmode="numeric" id="propertyTax" value="4,400">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="propertyInsurance">Property Insurance ($/yr)</label>
-                        <input type="number" id="propertyInsurance" value="1800" min="500" step="100">
+                        <input type="text" inputmode="numeric" id="propertyInsurance" value="1,800">
                         <small style="color: var(--gray);">Annual homeowners insurance</small>
                     </div>
                     <div class="form-group">
                         <label for="hoaFees">HOA Fees ($/mo)</label>
-                        <input type="number" id="hoaFees" value="0" min="0" step="25">
+                        <input type="text" inputmode="numeric" id="hoaFees" value="0">
                         <small style="color: var(--gray);">Monthly, if applicable</small>
                     </div>
                     <div class="form-group">
@@ -1234,7 +1234,7 @@
                         </div>
                         <div class="form-group">
                             <label for="rentPerUnit">Avg Rent per Unit ($/mo)</label>
-                            <input type="number" id="rentPerUnit" value="1500" min="500" step="50">
+                            <input type="text" inputmode="numeric" id="rentPerUnit" value="1,500">
                         </div>
                         <div class="form-group">
                             <label for="occupancyRate">Occupancy Rate (%)</label>
@@ -1269,7 +1269,7 @@
                         </div>
                         <div class="form-group">
                             <label for="annualNOI">Annual NOI ($)</label>
-                            <input type="number" id="annualNOI" value="60000" min="10000" step="5000">
+                            <input type="text" inputmode="numeric" id="annualNOI" value="60,000">
                         </div>
                         <div class="form-group">
                             <label for="sqFootage">Square Footage</label>
@@ -1728,16 +1728,16 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="annualIncome">Annual Gross Income ($)</label>
-                        <input type="number" id="annualIncome" value="100000" min="20000" step="5000">
+                        <input type="text" inputmode="numeric" id="annualIncome" value="100,000">
                     </div>
                     <div class="form-group">
                         <label for="monthlyDebts">Monthly Debt Payments ($)</label>
-                        <input type="number" id="monthlyDebts" value="500" min="0" step="50">
+                        <input type="text" inputmode="numeric" id="monthlyDebts" value="500">
                         <small style="color: var(--gray);">Car, student loans, credit cards, etc.</small>
                     </div>
                     <div class="form-group">
                         <label for="affDownPayment">Down Payment Available ($)</label>
-                        <input type="number" id="affDownPayment" value="50000" min="0" step="5000">
+                        <input type="text" inputmode="numeric" id="affDownPayment" value="50,000">
                     </div>
                     <div class="form-group">
                         <label for="affInterestRate">Expected Interest Rate (%)</label>
@@ -2756,6 +2756,7 @@
                 const rentField = document.getElementById('rentPerUnit');
                 if (rentField && data.rent) {
                     rentField.value = Math.round(data.rent * 0.85); // Units typically rent below state median
+                    formatCurrencyInput(rentField);
                 }
             }
 
@@ -2873,10 +2874,10 @@
 
         // Mortgage Comparison Calculator
         function calculateMortgage() {
-            const homePrice = parseFloat(document.getElementById('homePrice').value);
-            const interestRate = parseFloat(document.getElementById('interestRate').value);
-            const loanTerm = parseInt(document.getElementById('loanTerm').value);
-            const propertyTax = parseFloat(document.getElementById('propertyTax').value);
+            const homePrice = parseCurrencyValue('homePrice');
+            const interestRate = parseFloat(document.getElementById('interestRate').value) || 0;
+            const loanTerm = parseInt(document.getElementById('loanTerm').value) || 30;
+            const propertyTax = parseCurrencyValue('propertyTax');
 
             // Determine down payment options based on property type
             let downPayments;
@@ -2890,7 +2891,7 @@
                     break;
                 case 'multi-family':
                     const numUnits = parseInt(document.getElementById('numUnits').value);
-                    const rentPerUnit = parseFloat(document.getElementById('rentPerUnit').value);
+                    const rentPerUnit = parseCurrencyValue('rentPerUnit');
                     const occupancyRate = parseFloat(document.getElementById('occupancyRate').value) / 100;
                     const ownerOccupied = document.getElementById('ownerOccupied').value === 'yes';
 
@@ -2903,7 +2904,7 @@
                     downPayments = ownerOccupied ? [3.5, 10, 20] : [15, 20, 25];
                     break;
                 case 'commercial':
-                    annualNOI = parseFloat(document.getElementById('annualNOI').value);
+                    annualNOI = parseCurrencyValue('annualNOI');
                     downPayments = [20, 25, 35];
                     showCashFlow = true;
                     break;
@@ -2912,8 +2913,8 @@
             const results = [];
 
             // Get insurance and HOA inputs
-            const annualInsurance = parseFloat(document.getElementById('propertyInsurance').value) || 1800;
-            const monthlyHOA = parseFloat(document.getElementById('hoaFees').value) || 0;
+            const annualInsurance = parseCurrencyValue('propertyInsurance') || 1800;
+            const monthlyHOA = parseCurrencyValue('hoaFees');
 
             downPayments.forEach(dp => {
                 const downAmount = homePrice * (dp / 100);
@@ -3215,10 +3216,10 @@
 
         // Affordability Calculator
         function calculateAffordability() {
-            const annualIncome = parseFloat(document.getElementById('annualIncome').value);
-            const monthlyDebts = parseFloat(document.getElementById('monthlyDebts').value);
-            const downPayment = parseFloat(document.getElementById('affDownPayment').value);
-            const interestRate = parseFloat(document.getElementById('affInterestRate').value);
+            const annualIncome = parseCurrencyValue('annualIncome');
+            const monthlyDebts = parseCurrencyValue('monthlyDebts');
+            const downPayment = parseCurrencyValue('affDownPayment');
+            const interestRate = parseFloat(document.getElementById('affInterestRate').value) || 0;
 
             const monthlyIncome = annualIncome / 12;
             const maxHousingPayment = monthlyIncome * 0.28; // 28% front-end
@@ -3356,12 +3357,12 @@
                         const dwelling = dwellingData[currentDwellingType];
 
                         const adjustedHomePrice = Math.round(stateInfo.homePrice * dwelling.priceMultiplier);
+                        document.getElementById('homePrice').value = adjustedHomePrice;
                         document.getElementById('propertyTax').value = Math.round(adjustedHomePrice * (stateInfo.taxRate / 100));
                         document.getElementById('propertyInsurance').value = Math.round(stateInfo.insurance * dwelling.insuranceMultiplier);
                         document.getElementById('hoaFees').value = dwelling.avgHoa;
-                        document.getElementById('homePrice').value = adjustedHomePrice;
 
-                        // Update state displays
+                        // Update state displays (also re-formats currency fields)
                         updateStateDefaults();
                         updateDwellingInfoDisplay();
 
@@ -3533,47 +3534,44 @@ Visit us: https://buyersmath.com
 
         // Currency input formatting - add commas as the user types
         function formatCurrencyInput(input) {
-            const raw = input.value.replace(/,/g, '');
-            if (raw === '' || isNaN(raw)) return;
+            // Save cursor position relative to end (so cursor doesn't jump)
+            const endDist = input.value.length - (input.selectionStart || input.value.length);
+            const raw = input.value.replace(/[^0-9]/g, '');
+            if (raw === '') { input.value = ''; return; }
             const num = parseInt(raw, 10);
             if (!isNaN(num)) {
                 input.value = num.toLocaleString('en-US');
+                // Restore cursor position
+                const newPos = Math.max(0, input.value.length - endDist);
+                input.setSelectionRange(newPos, newPos);
             }
         }
 
-        function parseCurrencyInput(input) {
-            return parseFloat(input.value.replace(/,/g, '')) || 0;
+        // Parse a currency input value, stripping commas. Returns 0 if empty/invalid.
+        function parseCurrencyValue(id) {
+            const el = document.getElementById(id);
+            if (!el) return 0;
+            const val = parseFloat(el.value.replace(/[^0-9.]/g, ''));
+            return isNaN(val) ? 0 : val;
         }
 
-        // Apply formatting to dollar-value inputs
-        ['homePrice', 'propertyTax', 'propertyInsurance', 'hoaFees'].forEach(id => {
+        // All dollar-value input IDs
+        const currencyFields = ['homePrice', 'propertyTax', 'propertyInsurance', 'hoaFees',
+                                'rentPerUnit', 'annualNOI', 'annualIncome', 'monthlyDebts', 'affDownPayment'];
+
+        // Apply formatting to all dollar-value inputs
+        currencyFields.forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
             el.addEventListener('input', () => formatCurrencyInput(el));
-            // Format the default value on load
-            formatCurrencyInput(el);
+            el.addEventListener('focus', () => {
+                if (el.value === '0') el.value = '';
+            });
+            el.addEventListener('blur', () => {
+                if (el.value.trim() === '') el.value = '0';
+                else formatCurrencyInput(el);
+            });
         });
-
-        // Override parseFloat for formatted inputs in calculateMortgage
-        const origCalcMortgage = calculateMortgage;
-        calculateMortgage = function() {
-            // Temporarily strip commas from formatted inputs before calculation
-            const fields = ['homePrice', 'propertyTax', 'propertyInsurance', 'hoaFees'];
-            const origValues = {};
-            fields.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    origValues[id] = el.value;
-                    el.value = el.value.replace(/,/g, '');
-                }
-            });
-            origCalcMortgage();
-            // Restore formatted values
-            fields.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = origValues[id];
-            });
-        };
     </script>
 
     <footer class="site-footer">
