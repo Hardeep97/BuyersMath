@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Free mortgage calculator with live rates. Compare down payments (5%-30%), estimate rates by credit score, check affordability by state. No sign-up required.">
-    <meta name="keywords" content="mortgage calculator, home affordability calculator, down payment comparison, credit score mortgage rate, mortgage rates today, FHA VA conventional loan, first time home buyer calculator">
+    <meta name="keywords" content="mortgage calculator, home affordability calculator, down payment comparison, credit score mortgage rate, mortgage rates today, prime rate today, FHA VA conventional loan, first time home buyer calculator">
     <meta name="robots" content="index, follow">
     <meta name="author" content="BuyersMath">
     <meta property="og:title" content="BuyersMath - Free Mortgage & Home Affordability Calculator">
@@ -827,7 +827,7 @@
             }
 
             #ratesGridBottom {
-                grid-template-columns: repeat(2, 1fr) !important;
+                grid-template-columns: repeat(3, 1fr) !important;
                 max-width: 100% !important;
                 gap: 0.5rem !important;
             }
@@ -1109,7 +1109,7 @@
                     </div>
                 </div>
                 <!-- Bottom row: 4 cards -->
-                <div id="ratesGridBottom" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                <div id="ratesGridBottom" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem;">
                     <div class="rate-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 1.25rem; border-radius: 10px; text-align: center; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
                         <div style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">5/1 ARM</div>
                         <div id="rateARM" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">5.750%</div>
@@ -1129,6 +1129,11 @@
                         <div style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">DSCR</div>
                         <div id="rateDSCR" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">7.250%</div>
                         <div style="font-size: 0.7rem; opacity: 0.8;">Investors</div>
+                    </div>
+                    <div class="rate-card" style="background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%); color: white; padding: 1.25rem; border-radius: 10px; text-align: center; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3);" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                        <div style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">Prime Rate</div>
+                        <div id="ratePrime" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">7.500%</div>
+                        <div style="font-size: 0.7rem; opacity: 0.8;">WSJ Prime</div>
                     </div>
                 </div>
                 </div><!-- end ratesWrapper -->
@@ -1234,6 +1239,7 @@
                     <span style="display: flex; align-items: center; gap: 0.5rem;"><span style="width: 20px; height: 3px; background: #9b59b6;"></span> Jumbo</span>
                     <span style="display: flex; align-items: center; gap: 0.5rem;"><span style="width: 20px; height: 3px; background: #1abc9c;"></span> USDA</span>
                     <span style="display: flex; align-items: center; gap: 0.5rem;"><span style="width: 20px; height: 3px; background: #e67e22;"></span> DSCR</span>
+                    <span style="display: flex; align-items: center; gap: 0.5rem;"><span style="width: 20px; height: 3px; background: #2c3e50;"></span> Prime Rate</span>
                 </div>
             </div>
         </section>
@@ -2021,6 +2027,9 @@
                 dscr = year >= 2000 ? conv + 0.625 : null;
             }
 
+            // Prime rate: historically ~3% above Fed Funds Rate, roughly conv + 1.0
+            const prime = conv + 1.0;
+
             return {
                 conventional: conv,
                 fha: fha,
@@ -2029,6 +2038,7 @@
                 jumbo: jumbo,
                 usda: usda,
                 dscr: dscr,
+                prime: prime,
                 note: baseData.note
             };
         }
@@ -2073,7 +2083,8 @@
             arm: 5.75,
             jumbo: 6.71,
             usda: 6.10,
-            dscr: 7.25
+            dscr: 7.25,
+            prime: 7.50
         };
 
         // Fetch live rates from FRED (St. Louis Fed) - Freddie Mac PMMS data
@@ -2082,7 +2093,8 @@
                 const fredApiKey = 'DEMO_KEY'; // FRED allows limited requests with demo key
                 const series = {
                     conventional: 'MORTGAGE30US',
-                    arm: 'MORTGAGE5US'
+                    arm: 'MORTGAGE5US',
+                    prime: 'DPRIME'
                 };
 
                 const responses = await Promise.all(
@@ -2136,6 +2148,7 @@
             document.getElementById('rateJumbo').textContent = rates.jumbo ? rates.jumbo.toFixed(3) + '%' : 'N/A';
             document.getElementById('rateUSDA').textContent = rates.usda ? rates.usda.toFixed(3) + '%' : 'N/A';
             document.getElementById('rateDSCR').textContent = rates.dscr ? rates.dscr.toFixed(3) + '%' : 'N/A';
+            document.getElementById('ratePrime').textContent = rates.prime ? rates.prime.toFixed(3) + '%' : 'N/A';
 
             const titleEl = document.getElementById('ratesTitle');
             const subtitleEl = document.getElementById('ratesSubtitle');
@@ -2207,7 +2220,8 @@
                 arm: [],
                 jumbo: [],
                 usda: [],
-                dscr: []
+                dscr: [],
+                prime: []
             };
 
             labels.forEach(yearStr => {
@@ -2220,6 +2234,7 @@
                 rateData.jumbo.push(rates.jumbo || null);
                 rateData.usda.push(rates.usda || null);
                 rateData.dscr.push(rates.dscr || null);
+                rateData.prime.push(rates.prime || null);
             });
 
             rateChartInstance = new Chart(ctx, {
@@ -2294,6 +2309,17 @@
                             backgroundColor: 'rgba(230, 126, 34, 0.1)',
                             tension: 0.3,
                             borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Prime Rate',
+                            data: rateData.prime,
+                            borderColor: '#2c3e50',
+                            backgroundColor: 'rgba(44, 62, 80, 0.1)',
+                            tension: 0.3,
+                            borderWidth: 2.5,
+                            borderDash: [6, 3],
                             pointRadius: 0,
                             pointHoverRadius: 6
                         }
