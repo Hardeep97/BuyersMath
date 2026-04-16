@@ -9,7 +9,16 @@
     <meta property="og:description" content="Compare mortgages, estimate rates, and see what you can afford. Free, no sign-up.">
     <meta property="og:type" content="website">
     <link rel="canonical" href="https://buyersmath.com">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='10' y='45' width='80' height='50' rx='4' fill='%231877F2'/><polygon points='50,10 5,50 95,50' fill='%231565c0'/><rect x='38' y='60' width='24' height='35' rx='2' fill='white'/><circle cx='55' cy='78' r='2' fill='%231877F2'/></svg>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J74VG90975"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-J74VG90975');
+    </script>
     <title>BuyersMath - Free Mortgage & Home Affordability Calculator</title>
     <style>
         * {
@@ -531,6 +540,18 @@
             font-size: 0.8rem;
         }
 
+        /* Property Context Bar */
+        .property-context-bar {
+            margin-top: 0.75rem;
+            padding: 0.4rem 1rem;
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.9);
+            letter-spacing: 0.3px;
+        }
+
         /* Dwelling Type Switcher (Sub-category for Single Family) */
         .dwelling-type-switcher {
             display: none;
@@ -871,6 +892,64 @@
                 font-size: 0.75rem;
             }
         }
+
+        /* Rate cards loading overlay */
+        .rates-loading {
+            position: relative;
+        }
+        .rates-loading::after {
+            content: 'Loading live rates...';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: max-content;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: 600;
+            border-radius: 10px;
+            z-index: 5;
+            animation: pulseFade 1.5s ease-in-out infinite;
+        }
+        @keyframes pulseFade {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        /* Fade-in animation for results */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .results-grid.animated .result-card,
+        .comparison-table-wrapper.animated {
+            animation: fadeInUp 0.4s ease-out both;
+        }
+        .results-grid.animated .result-card:nth-child(2) { animation-delay: 0.05s; }
+        .results-grid.animated .result-card:nth-child(3) { animation-delay: 0.1s; }
+        .results-grid.animated .result-card:nth-child(4) { animation-delay: 0.15s; }
+        .results-grid.animated .result-card:nth-child(5) { animation-delay: 0.2s; }
+        .results-grid.animated .result-card:nth-child(6) { animation-delay: 0.25s; }
+
+        /* Financial disclaimer footer */
+        .site-footer {
+            text-align: center;
+            padding: 1.25rem 1rem;
+            margin-top: 2rem;
+            background: var(--white);
+            border-top: 1px solid var(--soft-border);
+            color: var(--gray);
+            font-size: 0.75rem;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body class="single-family">
@@ -909,6 +988,9 @@
                 <span class="dwelling-icon">🏛️</span>Co-op
             </button>
         </div>
+        <div id="propertyContextBar" class="property-context-bar">
+            <span id="propertyContextText">Single Family > Single Family Home</span>
+        </div>
     </header>
 
     <nav class="nav-tabs">
@@ -938,21 +1020,24 @@
                 </div>
                 <p id="historicalNote" style="color: var(--gray); font-size: 0.85rem; margin-bottom: 1rem; display: none;"></p>
 
+                <!-- Rate cards wrapper (loading overlay target) -->
+                <div id="ratesWrapper" class="rates-loading" style="position: relative;">
+
                 <!-- Top row: 3 cards -->
                 <div id="ratesGridTop" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem;">
                     <div class="rate-card" style="background: linear-gradient(135deg, #1877F2 0%, #1565c0 100%); color: white; padding: 1.25rem; border-radius: 10px; text-align: center; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
                         <div style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">Conventional</div>
-                        <div id="rateConv" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">6.875%</div>
+                        <div id="rateConv" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">6.460%</div>
                         <div style="font-size: 0.7rem; opacity: 0.8;">20% down</div>
                     </div>
                     <div class="rate-card" style="background: linear-gradient(135deg, #42b72a 0%, #36a420 100%); color: white; padding: 1.25rem; border-radius: 10px; text-align: center; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(66, 183, 42, 0.3);" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
                         <div style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">FHA</div>
-                        <div id="rateFHA" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">6.500%</div>
+                        <div id="rateFHA" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">6.100%</div>
                         <div style="font-size: 0.7rem; opacity: 0.8;">3.5% down</div>
                     </div>
                     <div class="rate-card" style="background: linear-gradient(135deg, #f7b928 0%, #e5a820 100%); color: white; padding: 1.25rem; border-radius: 10px; text-align: center; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(247, 185, 40, 0.3);" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
                         <div style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">VA</div>
-                        <div id="rateVA" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">6.250%</div>
+                        <div id="rateVA" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">5.500%</div>
                         <div style="font-size: 0.7rem; opacity: 0.8;">0% down</div>
                     </div>
                 </div>
@@ -960,25 +1045,26 @@
                 <div id="ratesGridBottom" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
                     <div class="rate-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 1.25rem; border-radius: 10px; text-align: center; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
                         <div style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">5/1 ARM</div>
-                        <div id="rateARM" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">6.125%</div>
+                        <div id="rateARM" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">5.750%</div>
                         <div style="font-size: 0.7rem; opacity: 0.8;">Adjustable</div>
                     </div>
                     <div class="rate-card" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; padding: 1.25rem; border-radius: 10px; text-align: center; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
                         <div style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">Jumbo</div>
-                        <div id="rateJumbo" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">7.125%</div>
+                        <div id="rateJumbo" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">6.710%</div>
                         <div style="font-size: 0.7rem; opacity: 0.8;">$766k+</div>
                     </div>
                     <div class="rate-card" style="background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%); color: white; padding: 1.25rem; border-radius: 10px; text-align: center; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(26, 188, 156, 0.3);" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
                         <div style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">USDA</div>
-                        <div id="rateUSDA" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">6.375%</div>
+                        <div id="rateUSDA" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">6.100%</div>
                         <div style="font-size: 0.7rem; opacity: 0.8;">Rural</div>
                     </div>
                     <div class="rate-card" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; padding: 1.25rem; border-radius: 10px; text-align: center; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
                         <div style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">DSCR</div>
-                        <div id="rateDSCR" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">7.500%</div>
+                        <div id="rateDSCR" style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">7.250%</div>
                         <div style="font-size: 0.7rem; opacity: 0.8;">Investors</div>
                     </div>
                 </div>
+                </div><!-- end ratesWrapper -->
             </div>
 
             <!-- Loan Type Comparison -->
@@ -1126,7 +1212,7 @@
                         <input type="number" id="hoaFees" value="0" min="0" step="25">
                         <small style="color: var(--gray);">Monthly, if applicable</small>
                     </div>
-                    <div class="form-group single-family-only">
+                    <div class="form-group">
                         <label for="stateSelectMortgage">State</label>
                         <select id="stateSelectMortgage" onchange="updateStateDefaults()">
                             <option value="">-- Select State --</option>
@@ -1140,7 +1226,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="numUnits">Number of Units</label>
-                            <select id="numUnits">
+                            <select id="numUnits" onchange="onMultiFamilyChange()">
                                 <option value="2">Duplex (2 units)</option>
                                 <option value="3">Triplex (3 units)</option>
                                 <option value="4">Fourplex (4 units)</option>
@@ -1156,7 +1242,7 @@
                         </div>
                         <div class="form-group">
                             <label for="ownerOccupied">Owner Occupied?</label>
-                            <select id="ownerOccupied">
+                            <select id="ownerOccupied" onchange="onMultiFamilyChange()">
                                 <option value="yes">Yes - Living in 1 unit</option>
                                 <option value="no">No - Full rental</option>
                             </select>
@@ -1173,7 +1259,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="propertyType">Property Type</label>
-                            <select id="propertyType">
+                            <select id="propertyType" onchange="updatePropertyContextBar()">
                                 <option value="retail">Retail</option>
                                 <option value="office">Office</option>
                                 <option value="industrial">Industrial</option>
@@ -1912,15 +1998,67 @@
         }
 
         // Today's default rates
-        const todayRates = {
-            conventional: 6.875,
-            fha: 6.500,
-            va: 6.250,
-            arm: 6.125,
-            jumbo: 7.125,
-            usda: 6.375,
-            dscr: 7.500
+        // Fallback rates (updated April 7, 2026 from Freddie Mac PMMS + market data)
+        let todayRates = {
+            conventional: 6.46,
+            fha: 6.10,
+            va: 5.50,
+            arm: 5.75,
+            jumbo: 6.71,
+            usda: 6.10,
+            dscr: 7.25
         };
+
+        // Fetch live rates from FRED (St. Louis Fed) - Freddie Mac PMMS data
+        async function fetchLiveRates() {
+            try {
+                const fredApiKey = 'DEMO_KEY'; // FRED allows limited requests with demo key
+                const series = {
+                    conventional: 'MORTGAGE30US',
+                    arm: 'MORTGAGE5US'
+                };
+
+                const responses = await Promise.all(
+                    Object.entries(series).map(([key, seriesId]) =>
+                        fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&sort_order=desc&limit=1&file_type=json&api_key=${fredApiKey}`)
+                            .then(r => r.json())
+                            .then(data => ({ key, value: parseFloat(data.observations[0].value) }))
+                            .catch(() => null)
+                    )
+                );
+
+                let updated = false;
+                const liveRates = { ...todayRates };
+
+                responses.forEach(result => {
+                    if (result && !isNaN(result.value)) {
+                        liveRates[result.key] = result.value;
+                        updated = true;
+                    }
+                });
+
+                if (updated) {
+                    // Derive other rates from conventional (industry-standard spreads)
+                    const conv = liveRates.conventional;
+                    liveRates.fha = parseFloat((conv - 0.375).toFixed(3));
+                    liveRates.va = parseFloat((conv - 0.875).toFixed(3));
+                    liveRates.jumbo = parseFloat((conv + 0.25).toFixed(3));
+                    liveRates.usda = parseFloat((conv - 0.375).toFixed(3));
+                    liveRates.dscr = parseFloat((conv + 0.75).toFixed(3));
+
+                    todayRates = liveRates;
+                    updateRateDisplay(todayRates, false, '', '');
+                }
+            } catch (err) {
+                // Fallback rates already set
+            } finally {
+                const wrapper = document.getElementById('ratesWrapper');
+                if (wrapper) wrapper.classList.remove('rates-loading');
+            }
+        }
+
+        // Try to fetch live rates on load
+        fetchLiveRates();
 
         // Update rate display
         function updateRateDisplay(rates, isHistorical, dateStr, note) {
@@ -1944,7 +2082,7 @@
                 noteEl.textContent = note ? note : '';
             } else {
                 titleEl.textContent = "Today's Rates";
-                subtitleEl.textContent = 'Updated 4x daily (6am, 12pm, 6pm, 12am EST)';
+                subtitleEl.textContent = 'Updated weekly from Freddie Mac PMMS survey';
                 updateTimestamp();
                 noteEl.textContent = '';
             }
@@ -2184,6 +2322,10 @@
         // Current property type
         let currentPropertyType = 'single-family';
 
+        // Multi-family price multipliers by unit count
+        const multiFamilyMultipliers = { 2: 1.3, 3: 1.6, 4: 1.9 };
+        const commercialMultiplier = 2.5;
+
         // Property Type Switcher
         document.querySelectorAll('.property-type-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -2207,11 +2349,23 @@
                     updateDwellingTypeUI();
                 }
 
+                // Re-apply state data for the new property type
+                const selectedState = document.getElementById('stateSelectMortgage').value;
+                if (selectedState) {
+                    updateStateDefaults();
+                }
+
+                // Update context bar
+                updatePropertyContextBar();
+
                 // Navigate to Mortgage Compare section
                 document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
                 document.getElementById('mortgage').classList.add('active');
                 document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
                 document.querySelector('.nav-tab[data-section="mortgage"]').classList.add('active');
+
+                // GA4: track property type change
+                gtag('event', 'property_type_change', { property_type: currentPropertyType });
             });
         });
 
@@ -2222,14 +2376,52 @@
                 btn.classList.add('active');
                 currentDwellingType = btn.dataset.dwelling;
                 updateDwellingTypeUI();
+                updatePropertyContextBar();
             });
         });
+
+        // Multi-Family change handler (units or owner-occupied changed)
+        function onMultiFamilyChange() {
+            const selectedState = document.getElementById('stateSelectMortgage').value;
+            if (selectedState) {
+                updateStateDefaults();
+            }
+            updatePropertyContextBar();
+            calculateMortgage();
+        }
+
+        // Update property context bar text
+        function updatePropertyContextBar() {
+            const bar = document.getElementById('propertyContextText');
+            if (!bar) return;
+
+            switch(currentPropertyType) {
+                case 'single-family': {
+                    const dwelling = dwellingData[currentDwellingType];
+                    bar.textContent = 'Single Family > ' + dwelling.name;
+                    break;
+                }
+                case 'multi-family': {
+                    const units = document.getElementById('numUnits').value;
+                    const unitLabels = { 2: 'Duplex', 3: 'Triplex', 4: 'Fourplex' };
+                    const ownerOcc = document.getElementById('ownerOccupied').value === 'yes';
+                    bar.textContent = 'Multi-Family > ' + unitLabels[units] + (ownerOcc ? ' (Owner-Occupied)' : ' (Investment)');
+                    break;
+                }
+                case 'commercial': {
+                    const propType = document.getElementById('propertyType');
+                    const label = propType.options[propType.selectedIndex].text;
+                    bar.textContent = 'Commercial > ' + label;
+                    break;
+                }
+            }
+        }
 
         function updateDwellingTypeUI() {
             const dwelling = dwellingData[currentDwellingType];
             const state = document.getElementById('stateSelectMortgage').value;
             const homePrice = document.getElementById('homePrice');
-            const hoa = document.getElementById('hoa');
+            const hoa = document.getElementById('hoaFees');
             const insurance = document.getElementById('propertyInsurance');
 
             // Get base price
@@ -2251,11 +2443,6 @@
             // Recalculate mortgage
             calculateMortgage();
 
-            // Also update Buy vs Rent if state is selected there
-            const bvState = document.getElementById('bvStateSelect');
-            if (bvState && bvState.value) {
-                updateBuyRentStateDefaults();
-            }
         }
 
         function updateDwellingInfoDisplay() {
@@ -2341,7 +2528,7 @@
                     subtitle.textContent = 'See how different down payments affect your monthly payment, PMI, and total cost.';
                     priceLabel.textContent = 'Home Price ($)';
                     homePrice.value = 400000;
-                    interestRate.value = 6.5;
+                    interestRate.value = todayRates.conventional || 6.46;
                     loanTerm.innerHTML = '<option value="30">30 Years</option><option value="15">15 Years</option><option value="20">20 Years</option>';
                     break;
 
@@ -2350,7 +2537,7 @@
                     subtitle.textContent = 'Analyze 2-4 unit properties with rental income calculations.';
                     priceLabel.textContent = 'Property Price ($)';
                     homePrice.value = 550000;
-                    interestRate.value = 6.75;
+                    interestRate.value = parseFloat((todayRates.conventional + 0.25).toFixed(3)) || 6.71;
                     loanTerm.innerHTML = '<option value="30">30 Years</option><option value="15">15 Years</option><option value="20">20 Years</option><option value="25">25 Years</option>';
                     break;
 
@@ -2359,7 +2546,7 @@
                     subtitle.textContent = 'Analyze commercial properties with NOI, cap rate, and DSCR calculations.';
                     priceLabel.textContent = 'Purchase Price ($)';
                     homePrice.value = 1000000;
-                    interestRate.value = 7.5;
+                    interestRate.value = parseFloat((todayRates.conventional + 1.0).toFixed(3)) || 7.46;
                     loanTerm.innerHTML = '<option value="25">25 Years</option><option value="20">20 Years</option><option value="15">15 Years</option><option value="10">10 Years</option>';
                     break;
             }
@@ -2489,6 +2676,39 @@
             }
         }
 
+        // Get price multiplier based on current property type
+        function getPropertyMultiplier() {
+            switch(currentPropertyType) {
+                case 'single-family':
+                    return dwellingData[currentDwellingType].priceMultiplier;
+                case 'multi-family': {
+                    const units = parseInt(document.getElementById('numUnits').value) || 2;
+                    return multiFamilyMultipliers[units] || 1.3;
+                }
+                case 'commercial':
+                    return commercialMultiplier;
+                default:
+                    return 1;
+            }
+        }
+
+        // Get display label for current property mode
+        function getPropertyLabel() {
+            switch(currentPropertyType) {
+                case 'single-family':
+                    return dwellingData[currentDwellingType].name;
+                case 'multi-family': {
+                    const units = document.getElementById('numUnits').value;
+                    const labels = { 2: 'Duplex', 3: 'Triplex', 4: 'Fourplex' };
+                    return labels[units] || 'Multi-Family';
+                }
+                case 'commercial':
+                    return 'Commercial';
+                default:
+                    return 'Home';
+            }
+        }
+
         // Update defaults when state is selected
         function updateStateDefaults() {
             const state = document.getElementById('stateSelectMortgage').value;
@@ -2499,38 +2719,68 @@
             }
 
             const data = stateData[state];
-            const dwelling = dwellingData[currentDwellingType];
+            const priceMultiplier = getPropertyMultiplier();
+            const label = getPropertyLabel();
 
-            // Apply dwelling type multipliers
-            const adjustedPrice = Math.round(data.homePrice * dwelling.priceMultiplier);
-            const adjustedInsurance = Math.round(data.insurance * dwelling.insuranceMultiplier);
+            // Insurance multiplier: use dwelling data for single-family, 1.2x for multi, 1.5x for commercial
+            const insuranceMultiplier = currentPropertyType === 'single-family'
+                ? dwellingData[currentDwellingType].insuranceMultiplier
+                : currentPropertyType === 'multi-family' ? 1.2 : 1.5;
+
+            const adjustedPrice = Math.round(data.homePrice * priceMultiplier);
+            const adjustedInsurance = Math.round(data.insurance * insuranceMultiplier);
 
             document.getElementById('propertyTax').value = Math.round(adjustedPrice * (data.taxRate / 100));
             document.getElementById('propertyInsurance').value = adjustedInsurance;
             document.getElementById('homePrice').value = adjustedPrice;
 
-            // Set HOA based on dwelling type
-            const hoaField = document.getElementById('hoa');
+            // Re-format currency inputs after programmatic update
+            ['homePrice', 'propertyTax', 'propertyInsurance'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && typeof formatCurrencyInput === 'function') formatCurrencyInput(el);
+            });
+
+            // Set HOA based on property type
+            const hoaField = document.getElementById('hoaFees');
             if (hoaField) {
-                hoaField.value = dwelling.avgHoa;
+                if (currentPropertyType === 'single-family') {
+                    hoaField.value = dwellingData[currentDwellingType].avgHoa;
+                } else {
+                    hoaField.value = 0;
+                }
+                if (typeof formatCurrencyInput === 'function') formatCurrencyInput(hoaField);
+            }
+
+            // Update rent per unit for multi-family based on state rent data
+            if (currentPropertyType === 'multi-family') {
+                const rentField = document.getElementById('rentPerUnit');
+                if (rentField && data.rent) {
+                    rentField.value = Math.round(data.rent * 0.85); // Units typically rent below state median
+                }
             }
 
             // Show state median price card
-            const baseNationalPrice = 428000 * dwelling.priceMultiplier;
+            const baseNationalPrice = 428000 * priceMultiplier;
             const priceDiff = ((adjustedPrice - baseNationalPrice) / baseNationalPrice * 100).toFixed(1);
             document.getElementById('stateMedianCard').style.display = 'block';
-            document.getElementById('stateMedianLabel').textContent = state + ' ' + dwelling.name;
+            document.getElementById('stateMedianLabel').textContent = state + ' ' + label;
             document.getElementById('stateMedianPrice').textContent = formatCurrency(adjustedPrice);
             document.getElementById('stateMedianCompare').textContent = `${priceDiff >= 0 ? '+' : ''}${priceDiff}% vs national`;
             document.getElementById('stateMedianCompare').style.color = priceDiff >= 0 ? '#ef4444' : '#10b981';
 
-            // Show sq ft breakdown with dwelling multiplier
+            // Show sq ft breakdown with multiplier
             document.getElementById('stateSqftBreakdown').style.display = 'block';
-            document.getElementById('sqftBreakdownTitle').textContent = state + ' - ' + dwelling.name + ' Prices by Size';
-            document.getElementById('mortgageSqftUnder2k').textContent = formatCurrency(Math.round(data.sqft.under2k * dwelling.priceMultiplier));
-            document.getElementById('mortgageSqft2k3k').textContent = formatCurrency(Math.round(data.sqft['2k-3k'] * dwelling.priceMultiplier));
-            document.getElementById('mortgageSqft3k4k').textContent = formatCurrency(Math.round(data.sqft['3k-4k'] * dwelling.priceMultiplier));
-            document.getElementById('mortgageSqft4kplus').textContent = formatCurrency(Math.round(data.sqft['4kplus'] * dwelling.priceMultiplier));
+            document.getElementById('sqftBreakdownTitle').textContent = state + ' - ' + label + ' Prices by Size';
+            document.getElementById('mortgageSqftUnder2k').textContent = formatCurrency(Math.round(data.sqft.under2k * priceMultiplier));
+            document.getElementById('mortgageSqft2k3k').textContent = formatCurrency(Math.round(data.sqft['2k-3k'] * priceMultiplier));
+            document.getElementById('mortgageSqft3k4k').textContent = formatCurrency(Math.round(data.sqft['3k-4k'] * priceMultiplier));
+            document.getElementById('mortgageSqft4kplus').textContent = formatCurrency(Math.round(data.sqft['4kplus'] * priceMultiplier));
+
+            // Auto-recalculate mortgage
+            calculateMortgage();
+
+            // GA4: track state selection
+            gtag('event', 'state_selected', { state: state, property_type: currentPropertyType });
         }
 
         // Populate state dropdown in mortgage section
@@ -2542,60 +2792,6 @@
                 option.textContent = state;
                 select.appendChild(option);
             });
-        }
-
-        // Populate state dropdown in Buy vs Rent section
-        function populateBuyRentStateDropdown() {
-            const select = document.getElementById('bvStateSelect');
-            Object.keys(stateData).sort().forEach(state => {
-                const option = document.createElement('option');
-                option.value = state;
-                option.textContent = state;
-                select.appendChild(option);
-            });
-        }
-
-        // Update Buy vs Rent section when state is selected
-        function updateBuyRentStateDefaults() {
-            const state = document.getElementById('bvStateSelect').value;
-            if (!state) {
-                document.getElementById('bvStateMarketData').style.display = 'none';
-                return;
-            }
-
-            const data = stateData[state];
-            const dwelling = dwellingData[currentDwellingType];
-
-            // Apply dwelling type multipliers (only for single family property type)
-            const priceMultiplier = currentPropertyType === 'single-family' ? dwelling.priceMultiplier : 1;
-            const rentMultiplier = currentPropertyType === 'single-family' ? dwelling.rentMultiplier : 1;
-            const insuranceMultiplier = currentPropertyType === 'single-family' ? dwelling.insuranceMultiplier : 1;
-
-            const adjustedPrice = Math.round(data.homePrice * priceMultiplier);
-            const adjustedRent = Math.round(data.rent * rentMultiplier);
-            const adjustedInsurance = Math.round(data.insurance * insuranceMultiplier);
-
-            // Show market data panel
-            document.getElementById('bvStateMarketData').style.display = 'block';
-
-            // Update display values
-            document.getElementById('bvStateMedian').textContent = formatCurrency(adjustedPrice);
-            document.getElementById('bvStateRent').textContent = formatCurrency(adjustedRent);
-            document.getElementById('bvStateTax').textContent = data.taxRate.toFixed(2) + '%';
-            document.getElementById('bvStateInsurance').textContent = formatCurrency(adjustedInsurance);
-
-            // Update sq ft breakdown
-            const dwellingLabel = currentPropertyType === 'single-family' ? dwelling.name : 'Home';
-            document.getElementById('bvSqftTitle').textContent = state + ' - ' + dwellingLabel + ' Prices by Size';
-            document.getElementById('bvSqftUnder2k').textContent = formatCurrency(Math.round(data.sqft.under2k * priceMultiplier));
-            document.getElementById('bvSqft2k3k').textContent = formatCurrency(Math.round(data.sqft['2k-3k'] * priceMultiplier));
-            document.getElementById('bvSqft3k4k').textContent = formatCurrency(Math.round(data.sqft['3k-4k'] * priceMultiplier));
-            document.getElementById('bvSqft4kplus').textContent = formatCurrency(Math.round(data.sqft['4kplus'] * priceMultiplier));
-
-            // Auto-fill form inputs
-            document.getElementById('bvHomePrice').value = adjustedPrice;
-            document.getElementById('bvMonthlyRent').value = adjustedRent;
-            document.getElementById('bvPropertyTax').value = data.taxRate;
         }
 
         // National averages (2024-2025)
@@ -2612,6 +2808,9 @@
 
                 tab.classList.add('active');
                 document.getElementById(tab.dataset.section).classList.add('active');
+
+                // GA4: track tab switch
+                gtag('event', 'tab_switch', { tab_name: tab.dataset.section });
             });
         });
 
@@ -2777,9 +2976,12 @@
                 });
             });
 
-            // Display results
+            // Display results with animation
             const resultsDiv = document.getElementById('mortgageResults');
+            resultsDiv.classList.remove('animated');
             resultsDiv.style.display = 'grid';
+            void resultsDiv.offsetWidth; // force reflow for animation restart
+            resultsDiv.classList.add('animated');
 
             if (currentPropertyType === 'single-family') {
                 resultsDiv.innerHTML = results.map((r, i) => `
@@ -2920,6 +3122,13 @@
             `;
 
             tbody.innerHTML = tableHTML;
+
+            // GA4: track mortgage calculation
+            gtag('event', 'calculate_mortgage', {
+                property_type: currentPropertyType,
+                home_price: homePrice,
+                state: document.getElementById('stateSelectMortgage').value || 'none'
+            });
         }
 
         // Credit Score Calculator
@@ -3002,114 +3211,6 @@
             document.getElementById('sqft2k3k').textContent = formatCurrency(data.sqft['2k-3k']);
             document.getElementById('sqft3k4k').textContent = formatCurrency(data.sqft['3k-4k']);
             document.getElementById('sqft4kplus').textContent = formatCurrency(data.sqft['4kplus']);
-        }
-
-        // Buy vs Rent Breakeven
-        function calculateBreakeven() {
-            const homePrice = parseFloat(document.getElementById('bvHomePrice').value);
-            const downPaymentPct = parseFloat(document.getElementById('bvDownPayment').value) / 100;
-            const interestRate = parseFloat(document.getElementById('bvInterestRate').value);
-            const monthlyRent = parseFloat(document.getElementById('bvMonthlyRent').value);
-            const appreciation = parseFloat(document.getElementById('bvAppreciation').value) / 100;
-            const rentIncrease = parseFloat(document.getElementById('bvRentIncrease').value) / 100;
-            const propertyTax = parseFloat(document.getElementById('bvPropertyTax').value) / 100;
-            const closingCostsPct = parseFloat(document.getElementById('bvClosingCosts').value) / 100;
-
-            const downPayment = homePrice * downPaymentPct;
-            const closingCosts = homePrice * closingCostsPct;
-            const loanAmount = homePrice - downPayment;
-            const monthlyPI = calculateMonthlyPayment(loanAmount, interestRate, 30);
-            const monthlyTax = (homePrice * propertyTax) / 12;
-            const monthlyInsurance = homePrice * 0.003 / 12;
-            const monthlyPMI = calculatePMI(loanAmount, homePrice, downPaymentPct * 100);
-            const monthlyBuyCost = monthlyPI + monthlyTax + monthlyInsurance + monthlyPMI;
-
-            // Calculate year by year
-            const years = [];
-            let totalRentPaid = 0;
-            let totalBuyCosts = downPayment + closingCosts;
-            let currentHomeValue = homePrice;
-            let remainingLoan = loanAmount;
-            let currentRent = monthlyRent;
-            let breakevenYear = null;
-
-            const monthlyRate = interestRate / 100 / 12;
-
-            for (let year = 1; year <= 10; year++) {
-                // Rent costs for the year
-                const yearRent = currentRent * 12;
-                totalRentPaid += yearRent;
-                currentRent *= (1 + rentIncrease);
-
-                // Buy costs for the year (simplified - using year 1 costs)
-                totalBuyCosts += monthlyBuyCost * 12;
-
-                // Home appreciation
-                currentHomeValue *= (1 + appreciation);
-
-                // Loan paydown (simplified calculation)
-                for (let month = 0; month < 12; month++) {
-                    const interestPayment = remainingLoan * monthlyRate;
-                    const principalPayment = monthlyPI - interestPayment;
-                    remainingLoan -= principalPayment;
-                }
-
-                const equity = currentHomeValue - remainingLoan;
-                const netPositionBuy = equity - totalBuyCosts;
-                const rentWealth = -totalRentPaid;
-
-                years.push({
-                    year,
-                    totalRentPaid,
-                    totalBuyCosts,
-                    homeValue: currentHomeValue,
-                    equity,
-                    netPositionBuy
-                });
-
-                if (!breakevenYear && netPositionBuy > rentWealth) {
-                    breakevenYear = year;
-                }
-            }
-
-            // Display results
-            document.getElementById('breakevenResults').style.display = 'block';
-            document.getElementById('breakevenYears').textContent =
-                breakevenYear ? `~${breakevenYear} years` : '10+ years';
-            document.getElementById('monthlyBuyCost').textContent = formatCurrency(monthlyBuyCost);
-            document.getElementById('totalRent5').textContent = formatCurrency(years[4].totalRentPaid);
-            document.getElementById('equityBuilt5').textContent = formatCurrency(years[4].equity);
-
-            // Breakeven marker
-            const markerPosition = breakevenYear ? Math.min((breakevenYear / 10) * 100, 100) : 100;
-            document.getElementById('breakevenMarker').style.left = markerPosition + '%';
-            document.getElementById('breakevenLabel').textContent =
-                breakevenYear ? `${breakevenYear} yrs` : '10+';
-
-            // Advice
-            let advice = '';
-            if (!breakevenYear || breakevenYear > 7) {
-                advice = 'With these numbers, renting may be more economical unless you plan to stay 7+ years. Consider if you value stability and building equity over flexibility.';
-            } else if (breakevenYear > 4) {
-                advice = 'Buying breaks even in a reasonable timeframe. If you plan to stay at least ' + breakevenYear + ' years, buying could be a good investment.';
-            } else {
-                advice = 'Buying appears financially advantageous relatively quickly. The local market seems to favor ownership.';
-            }
-            document.getElementById('breakevenAdvice').textContent = advice;
-
-            // Table
-            const tbody = document.getElementById('breakevenTable');
-            tbody.innerHTML = years.map(y => `
-                <tr ${y.year === breakevenYear ? 'style="background: #d1fae5;"' : ''}>
-                    <td><strong>Year ${y.year}</strong></td>
-                    <td>${formatCurrency(y.totalRentPaid)}</td>
-                    <td>${formatCurrency(y.totalBuyCosts)}</td>
-                    <td>${formatCurrency(y.equity)}</td>
-                    <td style="color: ${y.netPositionBuy >= 0 ? '#10b981' : '#ef4444'}">
-                        ${formatCurrency(y.netPositionBuy)}
-                    </td>
-                </tr>
-            `).join('');
         }
 
         // Affordability Calculator
@@ -3233,7 +3334,7 @@
         // Initialize
         populateStates();
         populateMortgageStateDropdown();
-        populateBuyRentStateDropdown();
+        // populateBuyRentStateDropdown removed - Buy vs Rent feature not yet implemented
         updateCreditDisplay();
 
         // Auto-detect state from IP and populate fields
@@ -3257,33 +3358,30 @@
                         const adjustedHomePrice = Math.round(stateInfo.homePrice * dwelling.priceMultiplier);
                         document.getElementById('propertyTax').value = Math.round(adjustedHomePrice * (stateInfo.taxRate / 100));
                         document.getElementById('propertyInsurance').value = Math.round(stateInfo.insurance * dwelling.insuranceMultiplier);
-                        document.getElementById('hoa').value = dwelling.avgHoa;
+                        document.getElementById('hoaFees').value = dwelling.avgHoa;
                         document.getElementById('homePrice').value = adjustedHomePrice;
 
                         // Update state displays
                         updateStateDefaults();
                         updateDwellingInfoDisplay();
 
-                        // Also set Buy vs Rent state
-                        const bvStateSelect = document.getElementById('bvStateSelect');
-                        if (bvStateSelect) {
-                            bvStateSelect.value = detectedState;
-                            updateBuyRentStateDefaults();
-                        }
-
-                        console.log('Location detected:', detectedState);
                     }
                 }
             } catch (error) {
-                console.log('Could not detect location, using defaults');
+                // Could not detect location, using defaults
             }
         }
 
         // Run auto-detection on page load
         autoDetectLocation();
 
+        // Initialize context bar and body class
+        document.body.classList.add('single-family');
+        updatePropertyContextBar();
+
         // Email Results Function
         function emailResults() {
+            gtag('event', 'email_results', { property_type: currentPropertyType });
             const email = document.getElementById('exportEmail').value;
 
             if (!email || !email.includes('@')) {
@@ -3347,6 +3445,7 @@ Visit us: https://buyersmath.com
 
         // Download PDF Function
         function downloadPDF() {
+            gtag('event', 'download_pdf', { property_type: currentPropertyType });
             // Get current values
             const homePrice = document.getElementById('homePrice').value;
             const state = document.getElementById('stateSelectMortgage').value || 'Not selected';
@@ -3431,6 +3530,55 @@ Visit us: https://buyersmath.com
                 printWindow.print();
             }, 250);
         }
+
+        // Currency input formatting - add commas as the user types
+        function formatCurrencyInput(input) {
+            const raw = input.value.replace(/,/g, '');
+            if (raw === '' || isNaN(raw)) return;
+            const num = parseInt(raw, 10);
+            if (!isNaN(num)) {
+                input.value = num.toLocaleString('en-US');
+            }
+        }
+
+        function parseCurrencyInput(input) {
+            return parseFloat(input.value.replace(/,/g, '')) || 0;
+        }
+
+        // Apply formatting to dollar-value inputs
+        ['homePrice', 'propertyTax', 'propertyInsurance', 'hoaFees'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', () => formatCurrencyInput(el));
+            // Format the default value on load
+            formatCurrencyInput(el);
+        });
+
+        // Override parseFloat for formatted inputs in calculateMortgage
+        const origCalcMortgage = calculateMortgage;
+        calculateMortgage = function() {
+            // Temporarily strip commas from formatted inputs before calculation
+            const fields = ['homePrice', 'propertyTax', 'propertyInsurance', 'hoaFees'];
+            const origValues = {};
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    origValues[id] = el.value;
+                    el.value = el.value.replace(/,/g, '');
+                }
+            });
+            origCalcMortgage();
+            // Restore formatted values
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = origValues[id];
+            });
+        };
     </script>
+
+    <footer class="site-footer">
+        For educational purposes only. Not financial advice. Rates and estimates shown are approximations and may not reflect current market conditions.
+        Consult a licensed mortgage professional before making financial decisions.
+    </footer>
 </body>
 </html>
